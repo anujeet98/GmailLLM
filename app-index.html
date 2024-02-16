@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gmail API Demo</title>
+  <script src="https://apis.google.com/js/api.js"></script>
+</head>
+<body>
+
+<button onclick="authorizeAndFetchEmails()">Fetch Emails</button>
+
+<script>
+  const clientId = '290104511133-jklj55ubpvj4h2buea8mdm06s84dv319.apps.googleusercontent.com';
+  const apiKey = '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';
+  const scopes = 'https://www.googleapis.com/auth/gmail.readonly';
+  const redirectUri = 'https://developers.google.com/oauthplayground'
+
+  function handleClientLoad() {
+    gapi.load('client:auth2', initClient);
+  }
+
+  async function initClient() {
+    try{
+        await gapi.client.init({
+            apiKey: apiKey,
+            clientId: clientId,
+            discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"],
+            scope: scopes,
+            redirect_uri: redirectUri
+        });
+        const authUrl = oAuth2Client.generateAuthUrl({
+            access_type: 'offline',
+            scope: SCOPES,
+        });
+
+        window.open(authUrl);
+        // Listen for sign-in state changes.
+        gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+
+        // Handle the initial sign-in state.
+        updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+    }
+    catch(err){
+        console.log('error', err);
+    }
+}
+
+  function updateSigninStatus(isSignedIn) {
+    if (isSignedIn) {
+      document.getElementById('authorize-button').style.display = 'none';
+      document.getElementById('signout-button').style.display = 'block';
+    } else {
+      document.getElementById('authorize-button').style.display = 'block';
+      document.getElementById('signout-button').style.display = 'none';
+    }
+  }
+
+  function authorizeAndFetchEmails() {
+    gapi.auth2.getAuthInstance().signIn().then(fetchEmails);
+  }
+
+  function fetchEmails() {
+    gapi.client.gmail.users.messages.list({
+      userId: 'me'
+    }).then(function(response) {
+      const messages = response.result.messages;
+      if (messages && messages.length > 0) {
+        console.log('User emails:', messages);
+      } else {
+        console.log('No emails found.');
+      }
+    });
+  }
+</script>
+
+<script src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
+
+</body>
+</html>
